@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: library-backend
+  template:
+    metadata:
+      labels:
+        app: library-backend
+    spec:
+      containers:
+      - name: backend
+        image: priyanshu907/library-backend:v3
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3021
+        env:
+        - name: DB_HOST
+          value: "mysql"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_USER
+          value: "root"
+        - name: DB_PASSWORD
+          value: "qwerty"

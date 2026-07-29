@@ -10,10 +10,11 @@ class DATABASE {
 
     initDB() {
         this.db.query(this.sql, (err, result) => {
-            if(err)
-                console.log("Couldn't create database");
-            else
-                console.log(`Successfully created database `);
+            if (err) {
+    console.log(err);
+} else {
+    console.log("Successfully created database");
+}
         })
     }
 }

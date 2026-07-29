@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: library-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: qwerty
+      MYSQL_DATABASE: library
+    ports:
+      - "3306:3306"
+
+  backend:
+    image: priyanshu907/library-backend:v1
+    container_name: library-backend
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: qwerty
+    ports:
+      - "3021:3021"
+
+  frontend:
+    image: priyanshu907/library-frontend:v1
+    container_name: library-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"

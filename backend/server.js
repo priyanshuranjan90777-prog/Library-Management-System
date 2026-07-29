@@ -28,17 +28,29 @@ class LIBRARY {
 
     get() {
 
-        //GET LIST OF ALL THE BOOKS
-        this.app.get('/api/getBooks', (req, res) => {
-            let sql = `SELECT * FROM book`;
-            this.db.query(sql, (err, result) => {
-                if(err)
-                    console.log(err);
-                else
-                    console.log("Successfully extracted books");
-                res.send(result);
+       //GET LIST OF ALL THE BOOKS
+this.app.get('/api/getBooks', (req, res) => {
+
+    console.log(">>> /api/getBooks endpoint hit");
+
+    let sql = "SELECT * FROM BOOK";
+
+    this.db.query(sql, (err, result) => {
+
+        if (err) {
+            console.log("SQL Error:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message
             });
-        });
+        }
+
+        console.log("Books fetched:", result);
+
+        return res.json(result);
+    });
+
+});
 
         //GET LIST OF BOOKS BY SEMESTER
         this.app.get('/api/getBooks/:id', (req, res) => {
@@ -149,6 +161,6 @@ class LIBRARY {
     
 }
 
-let library = new LIBRARY(3001, express());
+let library = new LIBRARY(3021, express());
 library.get();
 library.listen();
