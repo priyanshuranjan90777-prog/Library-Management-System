@@ -20,6 +20,7 @@ pipeline {
         stage('Verify Repository') {
             steps {
                 sh '''
+                echo "Current Workspace:"
                 pwd
                 ls -la
                 '''
@@ -63,7 +64,7 @@ pipeline {
         stage('Push Backend Image') {
             steps {
                 sh '''
-                docker push $BACKEND_IMAGE
+                    docker push $BACKEND_IMAGE
                 '''
             }
         }
@@ -71,46 +72,19 @@ pipeline {
         stage('Push Frontend Image') {
             steps {
                 sh '''
-                docker push $FRONTEND_IMAGE
+                    docker push $FRONTEND_IMAGE
                 '''
             }
         }
 
-        stage('Load Images into Minikube') {
+        stage('Pipeline Summary') {
             steps {
                 sh '''
-                minikube image load $BACKEND_IMAGE
-                minikube image load $FRONTEND_IMAGE
-                '''
-            }
-        }
-
-        stage('Update Kubernetes Images') {
-            steps {
-                sh '''
-                kubectl set image deployment/library-backend backend=$BACKEND_IMAGE
-                kubectl set image deployment/library-frontend frontend=$FRONTEND_IMAGE
-                '''
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh '''
-                kubectl apply -f k8s/
-                '''
-            }
-        }
-
-        stage('Verify Deployment') {
-            steps {
-                sh '''
-                kubectl rollout status deployment/library-backend
-                kubectl rollout status deployment/library-frontend
-
-                kubectl get pods
-                kubectl get svc
-                kubectl get deployments
+                echo "=============================================="
+                echo "Docker Images Successfully Built & Pushed"
+                echo "Backend Image : $BACKEND_IMAGE"
+                echo "Frontend Image: $FRONTEND_IMAGE"
+                echo "=============================================="
                 '''
             }
         }
@@ -118,11 +92,14 @@ pipeline {
 
     post {
         success {
-            echo "Library Management System deployed successfully!"
+            echo 'CI Pipeline completed successfully!'
+            echo "Backend Image : ${BACKEND_IMAGE}"
+            echo "Frontend Image: ${FRONTEND_IMAGE}"
+            echo 'Run Kubernetes deployment from your Windows host.'
         }
 
         failure {
-            echo "Deployment failed. Please check Jenkins console output."
+            echo 'CI Pipeline failed. Please check the Jenkins console output.'
         }
     }
 }
