@@ -15,6 +15,6 @@ spec:
       containers:
       - name: frontend
         image: priyanshu907/library-frontend:v4
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
