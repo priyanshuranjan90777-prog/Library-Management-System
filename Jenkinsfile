@@ -25,6 +25,7 @@ pipeline {
         stage('Verify Repository') {
             steps {
                 sh '''
+                set -e
                 echo "======================================"
                 echo "Repository Verification"
                 echo "======================================"
@@ -38,6 +39,7 @@ pipeline {
             steps {
                 dir('backend') {
                     sh '''
+                    set -e
                     docker build -t ${BACKEND_IMAGE} .
                     docker tag ${BACKEND_IMAGE} ${BACKEND_LATEST}
                     '''
@@ -49,6 +51,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh '''
+                    set -e
                     docker build -t ${FRONTEND_IMAGE} .
                     docker tag ${FRONTEND_IMAGE} ${FRONTEND_LATEST}
                     '''
@@ -64,6 +67,7 @@ pipeline {
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
                     sh '''
+                    set -e
                     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
                     '''
                 }
@@ -73,10 +77,13 @@ pipeline {
         stage('Push Docker Images') {
             steps {
                 sh '''
+                set -e
+
                 echo "Pushing Backend..."
                 docker push ${BACKEND_IMAGE}
                 docker push ${BACKEND_LATEST}
 
+                echo ""
                 echo "Pushing Frontend..."
                 docker push ${FRONTEND_IMAGE}
                 docker push ${FRONTEND_LATEST}
@@ -87,18 +94,48 @@ pipeline {
         stage('Update Kubernetes Manifests') {
             steps {
                 sh '''
+                set -e
+
                 echo "Updating Kubernetes manifests..."
 
                 sed -i "s|image: .*library-backend:.*|image: ${BACKEND_IMAGE}|g" k8s/backend-deployment.yaml
                 sed -i "s|image: .*library-frontend:.*|image: ${FRONTEND_IMAGE}|g" k8s/frontend-deployment.yaml
 
                 echo ""
-                echo "Backend Deployment Image:"
+                echo "Backend Image:"
                 grep image k8s/backend-deployment.yaml
 
                 echo ""
-                echo "Frontend Deployment Image:"
+                echo "Frontend Image:"
                 grep image k8s/frontend-deployment.yaml
+                '''
+            }
+        }
+
+        stage('Verify Kubernetes Access') {
+            steps {
+                sh '''
+                set -e
+
+                export KUBECONFIG=/var/jenkins_home/.kube/config
+
+                echo "======================================"
+                echo "Kubernetes Debug"
+                echo "======================================"
+
+                echo "User        : $(whoami)"
+                echo "Home        : $HOME"
+                echo "Workspace   : $(pwd)"
+                echo "KUBECONFIG  : $KUBECONFIG"
+
+                echo ""
+                ls -l /var/jenkins_home/.kube
+
+                echo ""
+                kubectl config current-context
+
+                echo ""
+                kubectl get nodes
                 '''
             }
         }
@@ -106,26 +143,20 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                echo "======================================"
-                echo "Deploying MySQL"
-                echo "======================================"
+                set -e
+                export KUBECONFIG=/var/jenkins_home/.kube/config
 
+                echo "Deploying MySQL..."
                 kubectl apply -f k8s/mysql-deployment.yaml
                 kubectl apply -f k8s/mysql-service.yaml
 
                 echo ""
-                echo "======================================"
-                echo "Deploying Backend"
-                echo "======================================"
-
+                echo "Deploying Backend..."
                 kubectl apply -f k8s/backend-deployment.yaml
                 kubectl apply -f k8s/backend-service.yaml
 
                 echo ""
-                echo "======================================"
-                echo "Deploying Frontend"
-                echo "======================================"
-
+                echo "Deploying Frontend..."
                 kubectl apply -f k8s/frontend-deployment.yaml
                 kubectl apply -f k8s/frontend-service.yaml
                 '''
@@ -135,6 +166,9 @@ pipeline {
         stage('Wait For Rollout') {
             steps {
                 sh '''
+                set -e
+                export KUBECONFIG=/var/jenkins_home/.kube/config
+
                 echo "Waiting for MySQL..."
                 kubectl rollout status deployment/mysql --timeout=180s
 
@@ -152,34 +186,27 @@ pipeline {
         stage('Verify Kubernetes Deployment') {
             steps {
                 sh '''
+                set -e
+                export KUBECONFIG=/var/jenkins_home/.kube/config
+
                 echo ""
-                echo "======================================"
-                echo "Pods"
-                echo "======================================"
+                echo "============== PODS =============="
                 kubectl get pods -o wide
 
                 echo ""
-                echo "======================================"
-                echo "Deployments"
-                echo "======================================"
+                echo "=========== DEPLOYMENTS =========="
                 kubectl get deployments -o wide
 
                 echo ""
-                echo "======================================"
-                echo "Services"
-                echo "======================================"
+                echo "============= SERVICES ==========="
                 kubectl get svc
 
                 echo ""
-                echo "======================================"
-                echo "Backend Deployment"
-                echo "======================================"
+                echo "========== BACKEND ==============="
                 kubectl describe deployment library-backend
 
                 echo ""
-                echo "======================================"
-                echo "Frontend Deployment"
-                echo "======================================"
+                echo "========== FRONTEND =============="
                 kubectl describe deployment library-frontend
                 '''
             }
@@ -189,16 +216,15 @@ pipeline {
             steps {
                 sh '''
                 echo ""
-                echo "=============================================="
-                echo "        CI/CD PIPELINE COMPLETED"
-                echo "=============================================="
+                echo "==========================================="
+                echo "      CI/CD PIPELINE COMPLETED"
+                echo "==========================================="
                 echo "Backend Image : ${BACKEND_IMAGE}"
                 echo "Frontend Image: ${FRONTEND_IMAGE}"
                 echo ""
                 echo "Docker Images pushed successfully."
                 echo "Application deployed successfully."
-                echo "Kubernetes rollout completed."
-                echo "=============================================="
+                echo "==========================================="
                 '''
             }
         }
@@ -211,13 +237,15 @@ pipeline {
         }
 
         failure {
-            echo "CI/CD Pipeline failed. Check the console output."
+            echo "CI/CD Pipeline failed. Check console output."
         }
 
         always {
             sh '''
+            export KUBECONFIG=/var/jenkins_home/.kube/config
+
             echo ""
-            echo "============= FINAL CLUSTER STATUS ============="
+            echo "========== FINAL CLUSTER STATUS =========="
 
             kubectl get pods || true
 
@@ -230,7 +258,7 @@ pipeline {
             echo ""
             kubectl get ingress || true
 
-            echo "==============================================="
+            echo "=========================================="
             '''
         }
     }
