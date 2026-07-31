@@ -23,10 +23,7 @@ pipeline {
         stage('Verify Repository') {
             steps {
                 sh '''
-                set -e
-                echo "======================================"
-                echo "Repository Verification"
-                echo "======================================"
+                echo "========== Repository =========="
                 pwd
                 ls -la
                 '''
@@ -37,7 +34,6 @@ pipeline {
             steps {
                 dir('backend') {
                     sh '''
-                    set -e
                     docker build -t ${BACKEND_IMAGE} .
                     docker tag ${BACKEND_IMAGE} ${BACKEND_LATEST}
                     '''
@@ -49,7 +45,6 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh '''
-                    set -e
                     docker build -t ${FRONTEND_IMAGE} .
                     docker tag ${FRONTEND_IMAGE} ${FRONTEND_LATEST}
                     '''
@@ -65,7 +60,6 @@ pipeline {
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
                     sh '''
-                    set -e
                     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
                     '''
                 }
@@ -75,21 +69,34 @@ pipeline {
         stage('Push Docker Images') {
             steps {
                 sh '''
-                set -e
-
-                echo "======================================"
-                echo "Pushing Backend Image"
-                echo "======================================"
                 docker push ${BACKEND_IMAGE}
                 docker push ${BACKEND_LATEST}
 
-                echo ""
-
-                echo "======================================"
-                echo "Pushing Frontend Image"
-                echo "======================================"
                 docker push ${FRONTEND_IMAGE}
                 docker push ${FRONTEND_LATEST}
+                '''
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                kubectl apply -f k8s/
+
+                kubectl rollout restart deployment/library-backend -n library-management
+                kubectl rollout restart deployment/library-frontend -n library-management
+
+                kubectl rollout status deployment/library-backend -n library-management
+                kubectl rollout status deployment/library-frontend -n library-management
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                kubectl get pods -n library-management
+                kubectl get svc -n library-management
                 '''
             }
         }
@@ -97,33 +104,28 @@ pipeline {
         stage('Pipeline Summary') {
             steps {
                 sh '''
-                echo ""
-                echo "==========================================="
-                echo "      CI/CD PIPELINE COMPLETED"
-                echo "==========================================="
+                echo "========================================="
+                echo "CI/CD PIPELINE COMPLETED SUCCESSFULLY"
+                echo "========================================="
                 echo "Backend Image : ${BACKEND_IMAGE}"
                 echo "Frontend Image: ${FRONTEND_IMAGE}"
-                echo ""
-                echo "Docker Images built successfully."
-                echo "Docker Images pushed successfully."
-                echo "==========================================="
+                echo "========================================="
                 '''
             }
         }
     }
 
     post {
-
         success {
-            echo "CI/CD Pipeline completed successfully."
+            echo 'Pipeline completed successfully.'
         }
 
         failure {
-            echo "CI/CD Pipeline failed. Check the console output."
+            echo 'Pipeline failed. Check Jenkins console output.'
         }
 
         always {
-            echo "Pipeline execution finished."
+            echo 'Pipeline execution finished.'
         }
     }
 }

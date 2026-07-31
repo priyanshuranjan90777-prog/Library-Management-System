@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Config
+
+clusters:
+- name: minikube
+  cluster:
+    server: https://host.docker.internal:60738
+    insecure-skip-tls-verify: true
+
+users:
+- name: jenkins
+  user:
+    token: yJhbGciOiJSUzI1NiIsImtpZCI6Ik1XVzB3cExwZ0ZFYzNYcmplSkVTQ19UcFRGQ1E4aXRrVXNtTG95cWFYdlEifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzg1Mzk5MjU0LCJpYXQiOjE3ODUzOTU2NTQsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiZjMyNzU3MjYtMDYyYi00YWM0LTkxNDEtNjMzNGY1YWZkZGU5Iiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwic2VydmljZWFjY291bnQiOnsibmFtZSI6ImplbmtpbnMiLCJ1aWQiOiIzYjhhN2ViMC1mMzNiLTQyMzctYjZiOC1kZDdmOWRiMTFhOWYifX0sIm5iZiI6MTc4NTM5NTY1NCwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50OmRlZmF1bHQ6amVua2lucyJ9.BPjjDg3JIaCDwCC7rWLUBVI0vdJUvBZ3GVQ0qy6gYS0MvQ1JSmAr1UFBz3bHetdxhNwwMxSzD-I7y8lCtOnOuotB-U3LR0sb-EBa446yJMzMbcZe6LMoPs8Pg-HVjD29PyphMwwfFgjhLdr31g7WSXxvSPVYmK_is1RhR8rZRo3DpDL6cntVbo5OwBKYGUkqG4Mto_rAeESECzdSAH1W8qJtG4qxQMUnwP0ycbNiVRGqcuY7jdLHK7f0Rsfb4XWuFudjhnhydBDjZzG70ess7aUekAWUENFrXVY0SlriPBNtf_XrRQE_vju1pf80TWoVbxgE88Yp-jZnKckpM1IPkw
+
+contexts:
+- name: jenkins-context
+  context:
+    cluster: minikube
+    user: jenkins
+
+current-context: jenkins-context

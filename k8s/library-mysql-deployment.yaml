@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-mysql
+  namespace: library-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: library-mysql
+  template:
+    metadata:
+      labels:
+        app: library-mysql
+    spec:
+      containers:
+      - name: library-mysql
+        image: mysql:5.7
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: qwerty
+        - name: MYSQL_DATABASE
+          value: library
+        ports:
+        - containerPort: 3306
