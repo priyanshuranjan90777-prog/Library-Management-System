@@ -78,15 +78,6 @@ pipeline {
             }
         }
 
-        stage('Verify Deployment') {
-            steps {
-                sh '''
-                kubectl get pods -n library-management
-                kubectl get svc -n library-management
-                '''
-            }
-        }
-
         stage('Pipeline Summary') {
             steps {
                 sh '''
