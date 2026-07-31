@@ -78,20 +78,6 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh '''
-                kubectl apply -f k8s/
-
-                kubectl rollout restart deployment/library-backend -n library-management
-                kubectl rollout restart deployment/library-frontend -n library-management
-
-                kubectl rollout status deployment/library-backend -n library-management
-                kubectl rollout status deployment/library-frontend -n library-management
-                '''
-            }
-        }
-
         stage('Verify Deployment') {
             steps {
                 sh '''
